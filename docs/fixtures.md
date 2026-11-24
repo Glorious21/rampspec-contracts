@@ -17,6 +17,20 @@ attempt in both modes. A configured public key contributes weight at most once;
 duplicate passkey keys are rejected before assertion validation and failed
 attempts do not consume the payload replay marker.
 
+`fixtures/passkey-assertion-vectors.json` publishes positive and negative
+passkey assertions for a fixed two-key policy, independent of runtime-generated
+test keys. Its keys come from fixed test-only seeds and its signatures are
+RFC 6979 deterministic, so the file is byte-stable; it holds no production keys,
+credentials or relying-party identifiers. Each vector records its outcome:
+accepted, a contract error (`InvalidPasskey` for a challenge that differs from
+the payload, out-of-range authenticator data or a high-S signature;
+`UnauthorizedSigner` for a key outside the policy), or a host trap for a failed
+P-256 verification. No refused or trapped vector leaves a replay marker.
+`contracts/policy-account-fixture/tests/passkey_vectors.rs` checks the file
+against `__check_auth` and regenerates it with `RAMPSPEC_WRITE_VECTORS=1`;
+`scripts/passkey-vectors.test.mjs` reproduces every outcome with Node's own
+P-256 implementation.
+
 Successful initialization and effective changes to signers, passkeys, or
 controls publish `PolicyConfigurationChanged`. The event contains a monotonic
 configuration version, signature mode, signer count, threshold, and SHA-256
